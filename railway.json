@@ -1,0 +1,7 @@
+{
+  "build": {
+    "base": "backend",
+    "buildCommand": "npm install",
+    "startCommand": "node server.js"
+  }
+}
