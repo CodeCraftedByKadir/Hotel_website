@@ -1,6 +1,13 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL =
+  process.env.REACT_APP_BACKEND_URL || "http://localhost:5000/api";
+console.log(
+  "API_BASE_URL SET TO:",
+  API_BASE_URL,
+  "from env:",
+  process.env.REACT_APP_BACKEND_URL
+);
 
 // Fetch all rooms
 // Fetch all rooms (admin might need token too)
@@ -82,7 +89,6 @@ export const getBookings = async (token) => {
   }
 };
 
-// Update booking status (approve/reject)
 // Update booking status (approve/reject)
 export const updateBookingStatus = async (bookingId, status, token) => {
   try {
