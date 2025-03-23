@@ -98,9 +98,9 @@ const RevenueDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const data = await getRevenueStats();
-      console.log("Revenue Data:", data); // Debugging output
-      // Ensure key names match your API response
+      const token = localStorage.getItem("token");
+      const data = await getRevenueStats(token);
+      console.log("Revenue Data:", data);
       setStats({
         totalEarnings: data.totalEarnings || 0,
         totalBookings: data.totalBookings || 0,

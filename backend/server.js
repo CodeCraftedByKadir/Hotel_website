@@ -4,6 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const { Pool } = require("pg");
 const roomRoutes = require("./routes/roomRoutes");
+const multer = require("multer"); // Add this
 const userRoutes = require("./routes/userRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
@@ -24,21 +25,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// PostgreSQL Database Connection
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-});
-
 // Routes
 app.use("/api/rooms", roomRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/payments", paymentRoutes); // Should mount /payment/verify as /api/payment/verify
-app.use("/api/admin", adminRoutes);
+
+console.log("DATABASE_URL from .env:", process.env.DATABASE_URL);
+
+// PostgreSQL Connection using DATABASE_URL
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false, // Required for hosted DBs like Railway
+  },
+});
 
 // Schedule 1-day reminders (runs daily at 9 AM)
 cron.schedule("0 9 * * *", async () => {
@@ -70,6 +71,8 @@ cron.schedule("0 9 * * *", async () => {
   }
 });
 
+app.use("/api/admin", adminRoutes(pool));
+
 // Error Handling Middleware
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
@@ -77,16 +80,12 @@ app.use((err, req, res, next) => {
       .status(400)
       .json({ message: "File upload error", error: err.message });
   }
+
+  console.error("Server error:", err.stack); // Log all errors
   res
     .status(500)
     .json({ message: "Internal server error", error: err.message });
 });
-
-// Test Database Connection
-pool
-  .connect()
-  .then(() => console.log("Connected to PostgreSQL"))
-  .catch((err) => console.error("Database connection error:", err));
 
 // Simple Route
 app.get("/", (req, res) => {

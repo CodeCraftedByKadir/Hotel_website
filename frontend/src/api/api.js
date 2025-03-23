@@ -125,16 +125,14 @@ export const processPayment = async (paymentData) => {
   }
 };
 
-export const getRevenueStats = async () => {
+export const getRevenueStats = async (token) => {
   try {
-    const response = await fetch("http://localhost:5000/api/admin/revenue");
-    if (!response.ok) {
-      throw new Error("Failed to fetch revenue stats");
-    }
-    const data = await response.json();
-    return data;
+    const response = await axios.get(`${API_BASE_URL}/admin/revenue`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
   } catch (error) {
-    console.error("API Fetch Error:", error);
-    return { totalEarnings: 0, totalBookings: 0, monthlyRevenue: [] }; // Prevents crashes
+    console.error("API Fetch Error:", error.response?.data || error.message);
+    return { totalEarnings: 0, totalBookings: 0, monthlyRevenue: [] };
   }
 };
