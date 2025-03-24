@@ -16,32 +16,25 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 const allowedOrigins = [
-  "https://suitespot.netlify.app", // Production URL
-  "http://localhost:3000", // Local dev
-  /.+\.netlify\.app$/, // Regex for Netlify preview URLs (e.g., 67e16ed2295ecb03fecc5ee3--suitespot.netlify.app)
+  "https://suitespot.netlify.app",
+  "http://localhost:3000",
+  /.+\.netlify\.app$/,
 ];
 
 // Middleware
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl)
       if (!origin) return callback(null, true);
-
-      // Check if origin matches any allowed origin or regex
       const isAllowed = allowedOrigins.some((allowed) => {
         if (typeof allowed === "string") return allowed === origin;
         if (allowed instanceof RegExp) return allowed.test(origin);
         return false;
       });
-
-      if (isAllowed) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("Not allowed by CORS"));
-      }
+      if (isAllowed) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
     },
-    credentials: true, // For auth cookies if used
+    credentials: true,
   })
 );
 app.use(bodyParser.json());
