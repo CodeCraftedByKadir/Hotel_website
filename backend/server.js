@@ -45,6 +45,69 @@ app.use((req, res, next) => {
   next();
 });
 
+// Public callback route
+app.get("/api/bookings/callback", async (req, res) => {
+  const { bookingId, reference, trxref } = req.query;
+
+  if (!bookingId || !reference || reference !== trxref) {
+    return res.status(400).json({ message: "Invalid callback parameters" });
+  }
+
+  try {
+    const payment = await pool.query(
+      "SELECT * FROM payments WHERE transaction_id = $1",
+      [reference]
+    );
+    if (payment.rows.length === 0) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    const verification = await Paystack.transaction.verify({ reference });
+    if (verification.data.status !== "success") {
+      return res.status(400).json({ message: "Payment verification failed" });
+    }
+
+    await pool.query(
+      "UPDATE payments SET payment_status = 'paid' WHERE transaction_id = $1",
+      [reference]
+    );
+    await pool.query(
+      "UPDATE bookings SET status = 'confirmed' WHERE id = $1",
+      [bookingId]
+    );
+
+    const user = await pool.query(
+      "SELECT email, phone FROM users WHERE id = (SELECT user_id FROM bookings WHERE id = $1)",
+      [bookingId]
+    );
+    const { email, phone } = user.rows[0];
+
+    await sendEmail(
+      email,
+      "Payment Successful",
+      `Your payment for booking (ID: ${bookingId}) was successful. Enjoy your stay!`
+    );
+    if (phone) {
+      await sendSMS(
+        phone,
+        `Payment for booking (ID: ${bookingId}) confirmed. See you soon!`
+      );
+    }
+
+    await sendEmail(
+      process.env.EMAIL_USER,
+      "New Payment Received",
+      `Payment of $${payment.rows[0].amount} received for booking (ID: ${bookingId}).`
+    );
+
+    res.redirect("https://suitespot.netlify.app/my-bookings");
+  } catch (error) {
+    console.error("Callback error:", error.message);
+    res.status(500).json({ message: "Error processing callback" });
+  }
+});
+
+
 // Routes
 app.use("/api/rooms", roomRoutes);
 app.use("/api/bookings", bookingRoutes);
