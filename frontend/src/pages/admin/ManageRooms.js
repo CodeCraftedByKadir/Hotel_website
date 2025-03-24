@@ -123,7 +123,7 @@ const ManageRooms = () => {
 
   useEffect(() => {
     fetchRooms();
-  }, []);
+  });
 
   const fetchRooms = async () => {
     try {

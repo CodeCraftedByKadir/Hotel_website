@@ -102,7 +102,7 @@ const RoomDetails = () => {
   useEffect(() => {
     fetchRoomDetails();
     if (bookingId) fetchBookingStatus();
-  }, [bookingId]); // Added bookingId dependency
+  }); // Added bookingId dependency
 
   const fetchRoomDetails = async () => {
     const rooms = await getRooms(token); // Pass token if required by backend
