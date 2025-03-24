@@ -176,16 +176,15 @@ router.post("/:id/pay", authenticateUser, async (req, res) => {
       userId,
     ]);
     const { email } = user.rows[0];
-    const amountInKobo = Math.round(booking.rows[0].total_price * 100); // Paystack uses kobo (cents)
+    const amountInKobo = Math.round(booking.rows[0].total_price * 100);
 
     const payment = await Paystack.transaction.initialize({
       email,
       amount: amountInKobo,
-      callback_url: `https://hotelwebsite-production-ddb7.up.railway.app/api/payments/callback?bookingId=${id}`, // Pass bookingId in callback
+      callback_url: `https://hotelwebsite-production-ddb7.up.railway.app/api/bookings/callback?bookingId=${id}`, // Updated
       metadata: { booking_id: id },
     });
 
-    // Store initial payment details
     await pool.query(
       "INSERT INTO payments (user_id, amount, payment_status, transaction_id) VALUES ($1, $2, 'pending', $3) RETURNING *",
       [userId, booking.rows[0].total_price, payment.data.reference]
@@ -201,6 +200,7 @@ router.post("/:id/pay", authenticateUser, async (req, res) => {
       .json({ message: "Error initiating payment", error: error.message });
   }
 });
+
 
 // Approve/Reject Booking (Admin only)
 router.put("/:id", authenticateUser, async (req, res) => {
@@ -308,6 +308,63 @@ router.post("/:id/verify-payment", authenticateUser, async (req, res) => {
     res
       .status(500)
       .json({ message: "Error verifying payment", error: error.message });
+  }
+});
+
+// Payment Callback from Paystack
+router.get("/callback", async (req, res) => {
+  const { bookingId, reference, trxref } = req.query;
+
+  if (!bookingId || !reference || reference !== trxref) {
+    return res.status(400).json({ message: "Invalid callback parameters" });
+  }
+
+  try {
+    const payment = await pool.query(
+      "SELECT * FROM payments WHERE transaction_id = $1",
+      [reference]
+    );
+    if (payment.rows.length === 0) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    const verification = await Paystack.transaction.verify({ reference });
+    if (verification.data.status === "success") {
+      await pool.query(
+        "UPDATE payments SET payment_status = 'paid' WHERE transaction_id = $1",
+        [reference]
+      );
+      await pool.query(
+        "UPDATE bookings SET status = 'confirmed' WHERE id = $1",
+        [bookingId]
+      );
+
+      const user = await pool.query(
+        "SELECT email, phone FROM users WHERE id = (SELECT user_id FROM bookings WHERE id = $1)",
+        [bookingId]
+      );
+      const { email, phone } = user.rows[0];
+
+      await sendEmail(
+        email,
+        "Payment Successful",
+        `Your payment for booking (ID: ${bookingId}) was successful. Enjoy your stay!`
+      );
+      if (phone) {
+        await sendSMS(
+          phone,
+          `Payment for booking (ID: ${bookingId}) confirmed. See you soon!`
+        );
+      }
+
+      // Redirect to frontend /my-bookings
+      res.redirect("https://suitespot.netlify.app/my-bookings");
+    } else {
+      res.status(400).json({ message: "Payment verification failed" });
+    }
+  } catch (error) {
+    console.error("Callback error:", error.message);
+    res.status(500).json({ message: "Error processing callback" });
   }
 });
 
