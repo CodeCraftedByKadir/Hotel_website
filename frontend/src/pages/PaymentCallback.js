@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { verifyPayment } from "../api/api"; // Updated import
+import { verifyPayment } from "../api/api"; // Ensure this is correctly imported
 
 const PaymentCallback = () => {
   const navigate = useNavigate();
@@ -21,9 +21,10 @@ const PaymentCallback = () => {
 
       try {
         console.log("Verifying payment with reference:", reference);
-        const response = await verifyPayment(bookingId, reference, token); // Updated to use verifyPayment
+        const response = await verifyPayment(bookingId, reference, token);
+
         if (response.message === "Payment verified") {
-          navigate("/my-bookings");
+          setTimeout(() => navigate("/my-bookings"), 2000); // Delay before redirect
         } else {
           throw new Error("Payment verification failed");
         }
