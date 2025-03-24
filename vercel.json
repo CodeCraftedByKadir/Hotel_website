@@ -17,5 +17,10 @@
   ],
   "env": {
     "REACT_APP_BACKEND_URL": "https://hotelwebsite-production-ddb7.up.railway.app/api"
+  },
+  "build": {
+    "env": {
+      "REACT_APP_BACKEND_URL": "https://hotelwebsite-production-ddb7.up.railway.app/api"
+    }
   }
 }
