@@ -181,7 +181,7 @@ router.post("/:id/pay", authenticateUser, async (req, res) => {
     const payment = await Paystack.transaction.initialize({
       email,
       amount: amountInKobo,
-      callback_url: `http://localhost:3000/payment-callback?bookingId=${id}`, // Pass bookingId in callback
+      callback_url: `https://hotelwebsite-production-ddb7.up.railway.app/api/payments/callback?bookingId=${id}`, // Pass bookingId in callback
       metadata: { booking_id: id },
     });
 

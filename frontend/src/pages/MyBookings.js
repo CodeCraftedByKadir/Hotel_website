@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { getBookings } from "../api/api";
 
 const BookingsContainer = styled.div`
   max-width: 90%;
@@ -101,9 +102,7 @@ const MyBookings = () => {
 
     const fetchBookings = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/bookings", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await getBookings({ token });
         setBookings(response.data);
       } catch (err) {
         setError(err.response?.data?.error || "Failed to fetch bookings");
