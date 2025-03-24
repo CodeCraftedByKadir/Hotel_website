@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { getRooms, bookRoom } from "../api/api";
+import { getRooms, bookRoom, getBooking, payBooking } from "../api/api"; // Updated imports
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
 
 const RoomDetailsContainer = styled.div`
   max-width: 800px;
@@ -103,23 +102,18 @@ const RoomDetails = () => {
   useEffect(() => {
     fetchRoomDetails();
     if (bookingId) fetchBookingStatus();
-  });
+  }, [bookingId]); // Added bookingId dependency
 
   const fetchRoomDetails = async () => {
-    const rooms = await getRooms();
+    const rooms = await getRooms(token); // Pass token if required by backend
     const selectedRoom = rooms.find((r) => r.id === parseInt(id));
     setRoom(selectedRoom);
   };
 
   const fetchBookingStatus = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:5000/api/bookings/${bookingId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setBookingStatus(response.data.status);
+      const booking = await getBooking(bookingId, token); // Updated to use getBooking
+      setBookingStatus(booking.status);
     } catch (error) {
       console.error("Error fetching booking status:", error);
     }
@@ -170,12 +164,8 @@ const RoomDetails = () => {
     }
 
     try {
-      const response = await axios.post(
-        `http://localhost:5000/api/bookings/${bookingId}/pay`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const { payment_url } = response.data;
+      const response = await payBooking(bookingId, token); // Updated to use payBooking
+      const { payment_url } = response;
       window.location.href = payment_url;
     } catch (error) {
       alert(

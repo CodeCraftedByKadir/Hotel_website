@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { useAuth } from "../context/AuthContext";
-import { getBookings } from "../api/api";
+import { getBookings, payBooking } from "../api/api"; // Updated import
 
 const BookingsContainer = styled.div`
   max-width: 90%;
@@ -102,8 +101,8 @@ const MyBookings = () => {
 
     const fetchBookings = async () => {
       try {
-        const response = await getBookings({ token });
-        setBookings(response.data);
+        const bookingsData = await getBookings(token); // Updated to use token directly
+        setBookings(bookingsData);
       } catch (err) {
         setError(err.response?.data?.error || "Failed to fetch bookings");
       } finally {
@@ -117,12 +116,8 @@ const MyBookings = () => {
   const handlePayment = async (bookingId) => {
     setProcessingPayment(bookingId);
     try {
-      const response = await axios.post(
-        `http://localhost:5000/api/bookings/${bookingId}/pay`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      window.location.href = response.data.payment_url;
+      const response = await payBooking(bookingId, token); // Updated to use payBooking
+      window.location.href = response.payment_url;
     } catch (error) {
       alert(
         "Error initiating payment: " +

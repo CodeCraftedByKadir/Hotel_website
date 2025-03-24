@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import axios from "axios";
 import { useForm } from "react-hook-form";
 import { useAuth } from "../context/AuthContext";
+import {
+  getProfile,
+  getBookings,
+  updateProfile,
+  updatePassword,
+} from "../api/api"; // Updated imports
 
 const ProfileContainer = styled.div`
   max-width: 800px;
@@ -65,21 +70,21 @@ const ProfilePicture = styled.img`
 
 const TableWrapper = styled.div`
   width: 100%;
-  overflow-x: auto; /* Enables horizontal scrolling on small screens */
+  overflow-x: auto;
 `;
 
 const BookingTable = styled.table`
   width: 100%;
   border-collapse: collapse;
   margin-top: 15px;
-  min-width: 600px; /* Ensures table doesn’t shrink too much */
+  min-width: 600px;
 
   th,
   td {
     padding: 10px;
     border: 1px solid #ccc;
     text-align: left;
-    white-space: nowrap; /* Prevents content from breaking */
+    white-space: nowrap;
   }
 
   th {
@@ -108,13 +113,8 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/users/profile",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setProfile(response.data);
+        const profileData = await getProfile(token); // Updated to use getProfile
+        setProfile(profileData);
       } catch (err) {
         setProfileError(
           err.response?.data?.message || "Failed to fetch profile"
@@ -124,13 +124,8 @@ const Profile = () => {
 
     const fetchBookings = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/users/profile/bookings",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setBookings(response.data);
+        const bookingsData = await getBookings(token); // Updated to use getBookings
+        setBookings(bookingsData);
       } catch (err) {
         console.error("Failed to fetch bookings:", err);
       }
@@ -149,17 +144,8 @@ const Profile = () => {
       formData.append("profile_picture", data.profile_picture[0]);
 
     try {
-      const response = await axios.put(
-        "http://localhost:5000/api/users/profile",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      setProfile(response.data.user);
+      const response = await updateProfile(formData, token); // Updated to use updateProfile
+      setProfile(response.user);
       setProfileError("");
       alert("Profile updated successfully!");
     } catch (err) {
@@ -171,14 +157,13 @@ const Profile = () => {
 
   const onPasswordSubmit = async (data) => {
     try {
-      await axios.put(
-        "http://localhost:5000/api/users/profile/password",
+      await updatePassword(
         {
           current_password: data.current_password,
           new_password: data.new_password,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+        token
+      ); // Updated to use updatePassword
       setPasswordError("");
       alert("Password updated successfully!");
     } catch (err) {
@@ -199,7 +184,7 @@ const Profile = () => {
           <>
             {profile.profile_picture && (
               <ProfilePicture
-                src={`http://localhost:5000${profile.profile_picture}`}
+                src={`https://hotelwebsite-production-ddb7.up.railway.app${profile.profile_picture}`} // Updated to Railway URL
                 alt="Profile"
               />
             )}
@@ -309,10 +294,16 @@ const Profile = () => {
             <tbody>
               {bookings.map((booking) => (
                 <tr key={booking.id}>
-                  <td>{booking.room_number || "N/A"}</td>
-                  <td>{new Date(booking.check_in).toLocaleDateString()}</td>
-                  <td>{new Date(booking.check_out).toLocaleDateString()}</td>
-                  <td>${booking.total_price}</td>
+                  <td>{booking.roomName || "N/A"}</td>{" "}
+                  {/* Updated from room_number */}
+                  <td>{new Date(booking.checkIn).toLocaleDateString()}</td>{" "}
+                  {/* Updated from check_in */}
+                  <td>
+                    {new Date(booking.checkOut).toLocaleDateString()}
+                  </td>{" "}
+                  {/* Updated from check_out */}
+                  <td>${booking.totalPrice}</td>{" "}
+                  {/* Updated from total_price */}
                   <td>{booking.status}</td>
                 </tr>
               ))}

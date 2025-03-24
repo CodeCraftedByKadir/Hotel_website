@@ -10,7 +10,6 @@ console.log(
 );
 
 // Fetch all rooms
-// Fetch all rooms (admin might need token too)
 export const getRooms = async (token) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/rooms`, {
@@ -72,7 +71,7 @@ export const bookRoom = async (bookingData, token) => {
   }
 };
 
-// Fetch all bookings
+// Fetch all bookings (user-specific)
 export const getBookings = async (token) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/bookings`, {
@@ -117,6 +116,173 @@ export const deleteRoom = async (roomId, token) => {
       "Error deleting room:",
       error.response?.data || error.message
     );
+  }
+};
+
+// Pay for a booking
+export const payBooking = async (bookingId, token) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/bookings/${bookingId}/pay`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error paying booking:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+// Verify payment
+export const verifyPayment = async (bookingId, reference, token) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/bookings/${bookingId}/verify-payment`,
+      { reference },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error verifying payment:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+// Get user profile
+export const getProfile = async (token) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/users/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error fetching profile:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+// Update user profile
+export const updateProfile = async (formData, token) => {
+  try {
+    const response = await axios.put(
+      `${API_BASE_URL}/users/profile`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error updating profile:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+// Update user password
+export const updatePassword = async (passwordData, token) => {
+  try {
+    const response = await axios.put(
+      `${API_BASE_URL}/users/profile/password`,
+      passwordData,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error updating password:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+// Get single booking
+export const getBooking = async (bookingId, token) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/bookings/${bookingId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error fetching booking:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+// Get all users (admin)
+export const getUsers = async (token) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/users`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error fetching users:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+// Update user role (admin)
+export const updateUserRole = async (userId, newRole, token) => {
+  try {
+    const response = await axios.put(
+      `${API_BASE_URL}/users/${userId}`,
+      { role: newRole },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error updating user role:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+// Delete user (admin)
+export const deleteUser = async (userId, token) => {
+  try {
+    const response = await axios.delete(`${API_BASE_URL}/users/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error deleting user:",
+      error.response?.data || error.message
+    );
+    throw error;
   }
 };
 

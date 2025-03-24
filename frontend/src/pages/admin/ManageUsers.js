@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { getUsers, updateUserRole, deleteUser } from "../../api/api"; // Updated imports
 
 const Container = styled.div`
   max-width: 1200px;
@@ -114,44 +114,39 @@ const ManageUsers = () => {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/users", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((response) => {
-        console.log("Users fetched:", response.data);
-        setUsers(response.data);
-      })
-      .catch((error) => console.error("Error fetching users:", error));
+    const fetchUsers = async () => {
+      try {
+        const usersData = await getUsers(token); // Updated to use getUsers
+        console.log("Users fetched:", usersData);
+        setUsers(usersData);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+    fetchUsers();
   }, [token]);
 
-  const updateRole = (userId, newRole) => {
-    axios
-      .put(
-        `http://localhost:5000/api/users/${userId}`,
-        { role: newRole },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      .then(() => {
-        setUsers((prev) =>
-          prev.map((user) =>
-            user.id === userId ? { ...user, role: newRole } : user
-          )
-        );
-      })
-      .catch((error) => console.error("Error updating role:", error));
+  const updateRole = async (userId, newRole) => {
+    try {
+      await updateUserRole(userId, newRole, token); // Updated to use updateUserRole
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === userId ? { ...user, role: newRole } : user
+        )
+      );
+    } catch (error) {
+      console.error("Error updating role:", error);
+    }
   };
 
-  const handleDelete = (userId) => {
+  const handleDelete = async (userId) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
-      axios
-        .delete(`http://localhost:5000/api/users/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then(() => {
-          setUsers(users.filter((user) => user.id !== userId));
-        })
-        .catch((error) => console.error("Error deleting user:", error));
+      try {
+        await deleteUser(userId, token); // Updated to use deleteUser
+        setUsers(users.filter((user) => user.id !== userId));
+      } catch (error) {
+        console.error("Error deleting user:", error);
+      }
     }
   };
 

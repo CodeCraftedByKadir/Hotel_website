@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
+import { getRooms, deleteRoom } from "../../api/api"; // Updated imports
+import { useAuth } from "../../context/AuthContext"; // Added for token
 
 const Container = styled.div`
   max-width: 1200px;
@@ -115,6 +116,7 @@ const StyledLink = styled(Link)`
 `;
 
 const ManageRooms = () => {
+  const { token } = useAuth(); // Added to get token
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -125,8 +127,8 @@ const ManageRooms = () => {
 
   const fetchRooms = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/rooms");
-      setRooms(response.data);
+      const roomsData = await getRooms(token); // Updated to use getRooms with token
+      setRooms(roomsData);
     } catch (error) {
       setError("Failed to load rooms.");
     } finally {
@@ -138,7 +140,7 @@ const ManageRooms = () => {
     if (!window.confirm("Are you sure you want to delete this room?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/rooms/${roomId}`);
+      await deleteRoom(roomId, token); // Updated to use deleteRoom
       setRooms(rooms.filter((room) => room.id !== roomId));
     } catch (error) {
       alert("Error deleting room.");

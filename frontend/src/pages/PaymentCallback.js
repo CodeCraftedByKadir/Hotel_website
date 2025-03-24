@@ -1,15 +1,16 @@
 import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
+import { verifyPayment } from "../api/api"; // Updated import
 
 const PaymentCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const verifyPayment = async () => {
+    const verifyPaymentCall = async () => {
       const reference = searchParams.get("reference");
       const bookingId = searchParams.get("bookingId");
+      const token = localStorage.getItem("token");
 
       if (!reference || !bookingId) {
         console.error("Missing reference or bookingId in URL");
@@ -20,19 +21,9 @@ const PaymentCallback = () => {
 
       try {
         console.log("Verifying payment with reference:", reference);
-        // Verify payment directly with Paystack API (or skip if trusting callback)
-        const response = await axios.post(
-          `http://localhost:5000/api/bookings/${bookingId}/verify-payment`,
-          { reference },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-
-        if (response.data.message === "Payment verified") {
-          navigate("/my-Bookings");
+        const response = await verifyPayment(bookingId, reference, token); // Updated to use verifyPayment
+        if (response.message === "Payment verified") {
+          navigate("/my-bookings");
         } else {
           throw new Error("Payment verification failed");
         }
@@ -49,7 +40,7 @@ const PaymentCallback = () => {
       }
     };
 
-    verifyPayment();
+    verifyPaymentCall();
   }, [navigate, searchParams]);
 
   return <p>Verifying payment, please wait...</p>;
